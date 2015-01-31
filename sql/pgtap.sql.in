@@ -3577,13 +3577,22 @@ RETURNS TEXT AS $$
         ARRAY(
             SELECT e.enumlabel
               FROM pg_catalog.pg_type t
-              JOIN pg_catalog.pg_enum e      ON t.oid = e.enumtypid
+              JOIN (
+                -- enumsortorder first available in 9.1
+                SELECT CASE WHEN EXISTS (
+                  SELECT 1 FROM pg_catalog.pg_attribute
+                  WHERE attrelid = 'pg_catalog.pg_enum'::regclass
+                   AND attname = 'enumsortorder'
+                   AND NOT attisdropped
+                ) THEN enumsortorder ELSE 0 END, oid, *
+                FROM pg_catalog.pg_enum
+              ) e ON t.oid = e.enumtypid
               JOIN pg_catalog.pg_namespace n ON t.typnamespace = n.oid
               WHERE t.typisdefined
                AND n.nspname = $1
                AND t.typname = $2
                AND t.typtype = 'e'
-             ORDER BY e.oid
+             ORDER BY e
         ),
         $3,
         $4
@@ -3606,12 +3615,21 @@ RETURNS TEXT AS $$
         ARRAY(
             SELECT e.enumlabel
               FROM pg_catalog.pg_type t
-              JOIN pg_catalog.pg_enum e ON t.oid = e.enumtypid
+              JOIN (
+                -- enumsortorder first available in 9.1
+                SELECT CASE WHEN EXISTS (
+                  SELECT 1 FROM pg_catalog.pg_attribute
+                  WHERE attrelid = 'pg_catalog.pg_enum'::regclass
+                   AND attname = 'enumsortorder'
+                   AND NOT attisdropped
+                ) THEN enumsortorder ELSE 0 END, oid, *
+                FROM pg_catalog.pg_enum
+              ) e ON t.oid = e.enumtypid
               WHERE t.typisdefined
                AND pg_catalog.pg_type_is_visible(t.oid)
                AND t.typname = $1
                AND t.typtype = 'e'
-             ORDER BY e.oid
+             ORDER BY e
         ),
         $2,
         $3
